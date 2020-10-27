@@ -133,28 +133,28 @@ export const actions = {
     commit('ruleConfig', { id, config })
   },
 
-  takeSlot ({ ctx }, { number, name }) {
+  takeSlot ({ rootState }, { number, name }) {
     this._vm.$connection.send({
       type: 'TAKE_SLOT',
-      payload: { number, name }
+      payload: { gameId: rootState.game.id, number, name }
     })
   },
 
-  renameSlot (ctx, { number, name }) {
+  renameSlot ({ rootState }, { number, name }) {
     this._vm.$connection.send({
       type: 'UPDATE_SLOT',
-      payload: { number, name }
+      payload: { gameId: rootState.game.id, number, name }
     })
   },
 
-  releaseSlot (ctx, { number }) {
+  releaseSlot ({ rootState }, { number }) {
     this._vm.$connection.send({
       type: 'LEAVE_SLOT',
-      payload: { number }
+      payload: { gameId: rootState.game.id, number }
     })
   },
 
-  createGame ({ state, commit, getters, dispatch }) {
+  createGame ({ state, getters, dispatch }) {
     const { $tiles } = this._vm
     const sets = mapKeys(state.sets, (value, key) => {
       return $tiles.sets[key] ? key : key + ':' + getters.getSelectedEdition

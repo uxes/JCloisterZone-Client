@@ -4,7 +4,6 @@ import Vue from 'vue'
 import { remote } from 'electron'
 
 import camelCase from 'lodash/camelCase'
-import compareVersions from 'compare-versions'
 
 import { NETWORK_PROTOCOL_COMPATIBILITY } from '@/constants/versions'
 import { getAppVersion } from '@/utils/version'
@@ -12,6 +11,8 @@ import { randomLong } from '@/utils/random'
 import { ENGINE_MESSAGES } from '@/constants/messages'
 import { CONSOLE_SERVER_COLOR } from '@/constants/logging'
 import { HEARTBEAT_INTERVAL } from '@/constants/ws'
+
+const isDev = process.env.NODE_ENV === 'development'
 
 export class GameServer {
   constructor (game, clientId, { engineVersion, appVersion }, app) {
@@ -105,8 +106,11 @@ export class GameServer {
 
     let helloExpected = true
     ws.on('message', async data => {
-      console.log('%c embedded server %c received ' + data, CONSOLE_SERVER_COLOR, '')
       const message = JSON.parse(data)
+      if (isDev) {
+        console.log('%c embedded server %c received message', CONSOLE_SERVER_COLOR, '')
+        console.log(message)
+      }
       const { id, type } = message
       if (this.receivedMessageIds.has(id)) {
         console.warn(`Dropping already received message ${data}"`)
@@ -229,7 +233,7 @@ export class GameServer {
       ws.close()
       return
     }
-    if (compareVersions(NETWORK_PROTOCOL_COMPATIBILITY, payload.appVersion) === 1) {
+    if (NETWORK_PROTOCOL_COMPATIBILITY !== payload.protocolVersion) {
       await this.send(ws, { type: 'ERR', code: 'bad-version', message: `Incompatible versions. server ${this.appVersion} / client: ${payload.appVersion}` })
       ws.close()
       return

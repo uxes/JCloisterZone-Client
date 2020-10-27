@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { getAppVersion } from '@/utils/version'
 import { CONSOLE_CLIENT_COLOR } from '@/constants/logging'
+import { NETWORK_PROTOCOL_COMPATIBILITY } from '@/constants/versions'
 import { HEARTBEAT_INTERVAL } from '@/constants/ws'
 
 const isDev = process.env.NODE_ENV === 'development'
@@ -52,7 +53,7 @@ class ConnectionPlugin {
           payload: {
             appVersion,
             engineVersion,
-            protocolVersion: '5.0.0',
+            protocolVersion: NETWORK_PROTOCOL_COMPATIBILITY,
             name: settings.nickname,
             clientId: settings.clientId,
             secret: settings.secret
@@ -75,6 +76,7 @@ class ConnectionPlugin {
       this.ws.addEventListener('message', ev => {
         const msg = JSON.parse(ev.data)
         if (isDev) {
+          console.log('%c client %c received message', CONSOLE_CLIENT_COLOR, '')
           console.debug(msg)
         }
         // console.debug(`%c client %c received ${msg.type}`, CONSOLE_CLIENT_COLOR, '')
@@ -87,7 +89,7 @@ class ConnectionPlugin {
           return
         }
         if (msg.type === 'WELCOME') {
-          console.log('%c client %c received session id ' + msg.payload.sessionId, CONSOLE_CLIENT_COLOR, '')
+          console.log('%c client %c session id assigned ' + msg.payload.sessionId, CONSOLE_CLIENT_COLOR, '')
           fulfilled = true
           resolve()
         }
@@ -125,7 +127,7 @@ class ConnectionPlugin {
           return false
         }
 
-        // set protection for next 250 ms => do not send message with same origin during this time
+        // set protection for next 1s => do not send message with same origin during this time
         this.recentlyUsedSourceHash = message.sourceHash
         setTimeout(() => {
           if (this.recentlyUsedSourceHash === message.sourceHash) {
